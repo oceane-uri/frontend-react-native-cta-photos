@@ -14,8 +14,14 @@ import PhotoCapture from '../src/components/PhotoCapture';
 import { photoService, Photo } from '../src/services/photoService';
 
 export default function CTAPhotoScreen() {
-  const { ctaId, ctaName } = useLocalSearchParams<{ ctaId: string; ctaName: string }>();
+  const params = useLocalSearchParams<{ ctaId: string; ctaName: string }>();
+  let { ctaId, ctaName } = params;
   const router = useRouter();
+  
+  // Si aucun ctaId n'est fourni, on en générera un automatiquement lors de la prise de photo
+  if (!ctaId) {
+    console.log('🔄 Aucun ctaId fourni, sera généré lors de la prise de photo');
+  }
   
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [showCamera, setShowCamera] = useState(false);
@@ -49,12 +55,14 @@ export default function CTAPhotoScreen() {
     validityDate: string;
     photoBase64: string;
   }) => {
-    if (!ctaId) return;
+    // Générer un ctaId automatiquement si aucun n'est fourni
+    const finalCtaId = ctaId || Math.floor(Math.random() * 1000000) + 1000000; // ID numérique entre 1000000 et 1999999
+    console.log('🔄 Utilisation du ctaId:', finalCtaId);
 
     try {
       const newPhoto = await photoService.addPhoto({
         ...photoData,
-        ctaId,
+        ctaId: finalCtaId,
       });
 
       setPhotos(prevPhotos => [newPhoto, ...prevPhotos]);

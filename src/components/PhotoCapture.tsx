@@ -143,21 +143,45 @@ export default function PhotoCapture({ onPhotoTaken, onClose, ctaId }: PhotoCapt
   }
 
   const takePicture = async () => {
+    console.log('📸 Tentative de capture...');
+    console.log('🔍 cameraRef.current:', cameraRef.current);
+    
     if (cameraRef.current) {
       try {
-        const photo = await cameraRef.current.takePictureAsync({
-          quality: 0.8,
-          base64: true,
-        });
+        console.log('✅ Référence caméra trouvée, capture en cours...');
         
-        setCapturedImage(photo.uri);
-        setPhotoBase64(photo.base64 || '');
-        
-        // Analyser la plaque d'immatriculation
-        await analyzeLicensePlate(photo.uri);
-      } catch {
+        // Essayer d'abord takePictureAsync (pour Camera)
+        if (typeof cameraRef.current.takePictureAsync === 'function') {
+          const photo = await cameraRef.current.takePictureAsync({
+            quality: 0.8,
+            base64: true,
+          });
+          
+          console.log('📷 Photo capturée avec takePictureAsync - URI:', photo.uri, 'Base64:', photo.base64 ? `${photo.base64.length} caractères` : 'null');
+          setCapturedImage(photo.uri);
+          setPhotoBase64(photo.base64 || '');
+          
+          // Analyser la plaque d'immatriculation
+          await analyzeLicensePlate(photo.uri);
+        } else {
+          console.log('⚠️ takePictureAsync non disponible, essai avec takePicture...');
+          // Essayer avec takePicture (pour CameraView)
+          const photo = await cameraRef.current.takePicture();
+          
+          console.log('📷 Photo capturée avec takePicture - URI:', photo.uri, 'Base64:', photo.base64 ? `${photo.base64.length} caractères` : 'null');
+          setCapturedImage(photo.uri);
+          setPhotoBase64(photo.base64 || '');
+          
+          // Analyser la plaque d'immatriculation
+          await analyzeLicensePlate(photo.uri);
+        }
+      } catch (error) {
+        console.error('❌ Erreur lors de la capture:', error);
         Alert.alert('Erreur', 'Impossible de prendre la photo');
       }
+    } else {
+      console.error('❌ Référence caméra non trouvée');
+      Alert.alert('Erreur', 'Référence caméra non disponible');
     }
   };
 
@@ -204,6 +228,7 @@ export default function PhotoCapture({ onPhotoTaken, onClose, ctaId }: PhotoCapt
           if (result.score > 0.7 && result.dscore > 0.7) {
             setLicensePlate(detectedPlate);
             setShowForm(true);
+            console.log('✅ Formulaire affiché avec plaque détectée');
           } else {
             console.log('⚠️ Qualité de détection faible, proposer la saisie manuelle');
             Alert.alert(
@@ -280,7 +305,7 @@ export default function PhotoCapture({ onPhotoTaken, onClose, ctaId }: PhotoCapt
       vehicleType,
       center,
       capturedImage: !!capturedImage,
-      photoBase64: !!photoBase64
+      photoBase64: photoBase64 ? `${photoBase64.length} caractères` : 'null'
     });
 
     if (!licensePlate.trim()) {
@@ -301,9 +326,10 @@ export default function PhotoCapture({ onPhotoTaken, onClose, ctaId }: PhotoCapt
       vehicleType,
       center,
       validityDate,
-      photoBase64,
+      photoBase64: photoBase64 ? `${photoBase64.length} caractères` : 'null',
     });
 
+    console.log('📞 Appel de onPhotoTaken...');
     onPhotoTaken({
       photoUri: capturedImage!,
       licensePlate: licensePlate.trim(),
@@ -312,6 +338,7 @@ export default function PhotoCapture({ onPhotoTaken, onClose, ctaId }: PhotoCapt
       validityDate,
       photoBase64,
     });
+    console.log('✅ onPhotoTaken appelé avec succès');
   };
 
   const retakePhoto = () => {
@@ -367,31 +394,45 @@ export default function PhotoCapture({ onPhotoTaken, onClose, ctaId }: PhotoCapt
 
           <View style={styles.formField}>
             <Text style={styles.label}>Type de véhicule</Text>
-            <View style={styles.pickerContainer}>
-              <Picker
-                selectedValue={vehicleType}
-                onValueChange={setVehicleType}
-                style={styles.picker}
-              >
-                {VEHICLE_TYPES.map((type) => (
-                  <Picker.Item key={type.value} label={type.label} value={type.value} />
-                ))}
-              </Picker>
+            <TextInput
+              style={styles.input}
+              value={vehicleType}
+              onChangeText={setVehicleType}
+              placeholder="Ex: CTVL, CTPL, CTTAXI"
+              autoCapitalize="characters"
+            />
+            <View style={styles.suggestionsContainer}>
+              {VEHICLE_TYPES.map((type) => (
+                <TouchableOpacity
+                  key={type.value}
+                  style={styles.suggestionItem}
+                  onPress={() => setVehicleType(type.value)}
+                >
+                  <Text style={styles.suggestionText}>{type.label}</Text>
+                </TouchableOpacity>
+              ))}
             </View>
           </View>
 
           <View style={styles.formField}>
             <Text style={styles.label}>Centre de contrôle</Text>
-            <View style={styles.pickerContainer}>
-              <Picker
-                selectedValue={center}
-                onValueChange={setCenter}
-                style={styles.picker}
-              >
-                {CENTERS.map((centerName) => (
-                  <Picker.Item key={centerName} label={centerName} value={centerName} />
-                ))}
-              </Picker>
+            <TextInput
+              style={styles.input}
+              value={center}
+              onChangeText={setCenter}
+              placeholder="Ex: EKPE, LOKOSSA, AGONLI"
+              autoCapitalize="characters"
+            />
+            <View style={styles.suggestionsContainer}>
+              {CENTERS.map((centerName) => (
+                <TouchableOpacity
+                  key={centerName}
+                  style={styles.suggestionItem}
+                  onPress={() => setCenter(centerName)}
+                >
+                  <Text style={styles.suggestionText}>{centerName}</Text>
+                </TouchableOpacity>
+              ))}
             </View>
           </View>
 
@@ -506,13 +547,14 @@ const styles = StyleSheet.create({
   },
   cameraOverlay: {
     position: 'absolute',
-    top: 0,
+    top: 100, // Laisser de l'espace pour le header
     left: 0,
     right: 0,
-    bottom: 0,
+    bottom: 120, // Laisser de l'espace pour les contrôles
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1,
+    pointerEvents: 'none', // Permettre aux clics de passer à travers
   },
   licensePlateFrame: {
     width: width * 0.8,
@@ -573,6 +615,24 @@ const styles = StyleSheet.create({
   placeholderButton: {
     width: 50,
     height: 50,
+  },
+  suggestionsContainer: {
+    marginTop: 5,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  suggestionItem: {
+    backgroundColor: '#f0f0f0',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  suggestionText: {
+    fontSize: 12,
+    color: '#333',
   },
   formContainer: {
     flex: 1,

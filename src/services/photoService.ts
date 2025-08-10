@@ -74,7 +74,10 @@ class PhotoService {
       
       await AsyncStorage.setItem(this.STORAGE_KEY, JSON.stringify(updatedPhotos));
       
-      console.log('Photo ajoutée avec succès:', newPhoto);
+      // Log sans la base64 pour plus de clarté
+    const logPhoto = { ...newPhoto };
+    logPhoto.photoBase64 = logPhoto.photoBase64 ? `[BASE64 - ${logPhoto.photoBase64.length} caractères]` : 'null';
+    console.log('Photo ajoutée avec succès:', logPhoto);
       return newPhoto;
     } catch (error) {
       console.error('Erreur lors de l\'ajout de la photo:', error);
@@ -85,10 +88,32 @@ class PhotoService {
   // Sauvegarder la photo en base de données
   private async savePhotoToDatabase(photo: Photo): Promise<void> {
     try {
+      console.log('🔐 Tentative de sauvegarde en base...');
+      
       const token = (global as any).authToken;
+      console.log('🔑 Token disponible:', !!token);
+      console.log('🔑 Token:', token);
+      
       if (!token) {
         throw new Error('Token d\'authentification manquant');
       }
+
+      const requestBody = {
+        immatriculation: photo.licensePlate,
+        date_visite: photo.visitDate,
+        centre: photo.center,
+        date_validite: photo.validityDate,
+        type_vehicule: photo.vehicleType,
+        photo_base64: photo.photoBase64,
+        cta_id: photo.ctaId,
+      };
+
+      // Log des données sans la photo base64 pour plus de clarté
+      const logData = { ...requestBody };
+      logData.photo_base64 = logData.photo_base64 ? `[BASE64 - ${logData.photo_base64.length} caractères]` : 'null';
+      
+      console.log('📤 Données à envoyer:', logData);
+      console.log('🌐 URL API:', `${API_BASE_URL}/cta/photo`);
 
       const response = await fetch(`${API_BASE_URL}/cta/photo`, {
         method: 'POST',
@@ -96,25 +121,21 @@ class PhotoService {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          immatriculation: photo.licensePlate,
-          date_visite: photo.visitDate,
-          centre: photo.center,
-          date_validite: photo.validityDate,
-          type_vehicule: photo.vehicleType,
-          photo_base64: photo.photoBase64,
-          cta_id: photo.ctaId,
-        }),
+        body: JSON.stringify(requestBody),
       });
+
+      console.log('📡 Réponse reçue:', response.status, response.statusText);
 
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('❌ Erreur API:', errorData);
         throw new Error(errorData.message || 'Erreur lors de la sauvegarde en base');
       }
 
-      console.log('Photo sauvegardée en base de données');
+      const responseData = await response.json();
+      console.log('✅ Photo sauvegardée en base de données:', responseData);
     } catch (error) {
-      console.error('Erreur lors de la sauvegarde en base:', error);
+      console.error('❌ Erreur lors de la sauvegarde en base:', error);
       throw error;
     }
   }
