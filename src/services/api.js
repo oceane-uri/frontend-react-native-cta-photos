@@ -1,9 +1,13 @@
-const API_BASE_URL = 'http://localhost:3000/api';
+import { API_BASE_URL } from '../config/api';
 
 // Service d'authentification
 export const authService = {
   login: async (email, password) => {
     try {
+      console.log('🔐 Tentative de connexion...');
+      console.log('📧 Email:', email);
+      console.log('🌐 URL:', `${API_BASE_URL}/auth/login`);
+      
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: {
@@ -12,14 +16,23 @@ export const authService = {
         body: JSON.stringify({ email, password }),
       });
 
+      console.log('📡 Réponse reçue:', response.status, response.statusText);
+      
       const data = await response.json();
+      console.log('📦 Données reçues:', data);
 
       if (!response.ok) {
-        throw new Error(data.message || 'Erreur de connexion');
+        console.error('❌ Erreur de connexion:', data.error || data.message);
+        throw new Error(data.error || data.message || 'Erreur de connexion');
       }
 
+      console.log('✅ Connexion réussie');
       return data;
     } catch (error) {
+      console.error('💥 Erreur lors de la connexion:', error);
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        throw new Error('Impossible de se connecter au serveur. Vérifiez votre connexion réseau.');
+      }
       throw new Error(error.message || 'Erreur de connexion');
     }
   },

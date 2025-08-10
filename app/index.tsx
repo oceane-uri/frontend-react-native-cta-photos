@@ -14,6 +14,7 @@ import { authService } from '../src/services/api';
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
@@ -27,16 +28,20 @@ export default function LoginScreen() {
       const response = await authService.login(email, password);
       
       // Stocker le token (dans un vrai projet, utilisez AsyncStorage)
-      global.authToken = response.token;
-      global.currentUser = response.user;
+      (global as any).authToken = response.token;
+      (global as any).currentUser = response.user;
       
       // Naviguer vers l'accueil
       router.replace('/home');
-    } catch (error) {
-      Alert.alert('Erreur', error.message);
+    } catch (error: any) {
+      Alert.alert('Erreur', error.message || 'Erreur de connexion');
     } finally {
       setLoading(false);
     }
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
 
   return (
@@ -52,15 +57,28 @@ export default function LoginScreen() {
           onChangeText={setEmail}
           keyboardType="email-address"
           autoCapitalize="none"
+          autoComplete="email"
         />
         
-        <TextInput
-          style={styles.input}
-          placeholder="Mot de passe"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
+        <View style={styles.passwordContainer}>
+          <TextInput
+            style={styles.passwordInput}
+            placeholder="Mot de passe"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry={!showPassword}
+            autoComplete="password"
+          />
+          <TouchableOpacity
+            style={styles.eyeButton}
+            onPress={togglePasswordVisibility}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Text style={styles.eyeIcon}>
+              {showPassword ? '👁️' : '👁️‍🗨️'}
+            </Text>
+          </TouchableOpacity>
+        </View>
         
         <TouchableOpacity
           style={styles.button}
@@ -73,6 +91,12 @@ export default function LoginScreen() {
             <Text style={styles.buttonText}>Se connecter</Text>
           )}
         </TouchableOpacity>
+
+        <View style={styles.forgotPasswordContainer}>
+          <TouchableOpacity onPress={() => Alert.alert('Info', 'Contactez votre administrateur pour réinitialiser votre mot de passe')}>
+            <Text style={styles.forgotPasswordText}>Mot de passe oublié ?</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -119,15 +143,47 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     fontSize: 16,
   },
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 5,
+    marginBottom: 15,
+    backgroundColor: 'white',
+  },
+  passwordInput: {
+    flex: 1,
+    padding: 15,
+    fontSize: 16,
+    borderWidth: 0,
+  },
+  eyeButton: {
+    padding: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  eyeIcon: {
+    fontSize: 20,
+  },
   button: {
     backgroundColor: '#2196F3',
     padding: 15,
     borderRadius: 5,
     alignItems: 'center',
+    marginBottom: 15,
   },
   buttonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  forgotPasswordContainer: {
+    alignItems: 'center',
+  },
+  forgotPasswordText: {
+    color: '#2196F3',
+    fontSize: 14,
+    textDecorationLine: 'underline',
   },
 }); 
