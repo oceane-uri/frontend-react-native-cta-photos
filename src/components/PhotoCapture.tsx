@@ -12,6 +12,7 @@ import {
   TextInput,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
+import LocationService, { LocationData } from '../services/locationService';
 
 // Import expo-camera components
 import {
@@ -64,6 +65,10 @@ interface PhotoCaptureProps {
     center: string;
     validityDate: string;
     photoBase64: string;
+    latitude?: number;
+    longitude?: number;
+    adresse?: string;
+    timestamp_photo?: string;
   }) => void;
   onClose: () => void;
   ctaId: string;
@@ -98,6 +103,8 @@ export default function PhotoCapture({ onPhotoTaken, onClose, ctaId }: PhotoCapt
   const [center, setCenter] = useState<string>(CENTERS[0]);
   const [showForm, setShowForm] = useState(false);
   const [photoBase64, setPhotoBase64] = useState<string>('');
+  const [locationData, setLocationData] = useState<LocationData | null>(null);
+  const [locationLoading, setLocationLoading] = useState(false);
   
   const cameraRef = useRef<any>(null);
 
@@ -163,6 +170,9 @@ export default function PhotoCapture({ onPhotoTaken, onClose, ctaId }: PhotoCapt
           
           // Analyser la plaque d'immatriculation
           await analyzeLicensePlate(photo.uri);
+          
+          // Obtenir la localisation
+          await getLocationData();
         } else {
           console.log('⚠️ takePictureAsync non disponible, essai avec takePicture...');
           // Essayer avec takePicture (pour CameraView)
@@ -174,6 +184,9 @@ export default function PhotoCapture({ onPhotoTaken, onClose, ctaId }: PhotoCapt
           
           // Analyser la plaque d'immatriculation
           await analyzeLicensePlate(photo.uri);
+          
+          // Obtenir la localisation
+          await getLocationData();
         }
       } catch (error) {
         console.error('❌ Erreur lors de la capture:', error);
@@ -182,6 +195,26 @@ export default function PhotoCapture({ onPhotoTaken, onClose, ctaId }: PhotoCapt
     } else {
       console.error('❌ Référence caméra non trouvée');
       Alert.alert('Erreur', 'Référence caméra non disponible');
+    }
+  };
+
+  // Obtenir les données de localisation
+  const getLocationData = async () => {
+    setLocationLoading(true);
+    try {
+      const locationService = LocationService.getInstance();
+      const location = await locationService.getCurrentLocation();
+      
+      if (location) {
+        setLocationData(location);
+        console.log('📍 Localisation obtenue:', location);
+      } else {
+        console.log('⚠️ Impossible d\'obtenir la localisation');
+      }
+    } catch (error) {
+      console.error('❌ Erreur lors de l\'obtention de la localisation:', error);
+    } finally {
+      setLocationLoading(false);
     }
   };
 
@@ -320,6 +353,10 @@ export default function PhotoCapture({ onPhotoTaken, onClose, ctaId }: PhotoCapt
 
     const validityDate = calculateValidityDate(vehicleType);
 
+    // Obtenir le timestamp actuel
+    const locationService = LocationService.getInstance();
+    const timestamp_photo = locationService.getCurrentTimestamp();
+
     console.log('✅ Données à envoyer:', {
       photoUri: capturedImage!,
       licensePlate: licensePlate.trim(),
@@ -327,6 +364,10 @@ export default function PhotoCapture({ onPhotoTaken, onClose, ctaId }: PhotoCapt
       center,
       validityDate,
       photoBase64: photoBase64 ? `${photoBase64.length} caractères` : 'null',
+      latitude: locationData?.latitude,
+      longitude: locationData?.longitude,
+      adresse: locationData?.adresse,
+      timestamp_photo,
     });
 
     console.log('📞 Appel de onPhotoTaken...');
@@ -337,6 +378,10 @@ export default function PhotoCapture({ onPhotoTaken, onClose, ctaId }: PhotoCapt
       center,
       validityDate,
       photoBase64,
+      latitude: locationData?.latitude,
+      longitude: locationData?.longitude,
+      adresse: locationData?.adresse,
+      timestamp_photo,
     });
     console.log('✅ onPhotoTaken appelé avec succès');
   };

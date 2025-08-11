@@ -7,7 +7,8 @@ const API_CONFIG = {
   },
   // Pour l'appareil physique connecté au même réseau WiFi
   production: {
-    baseURL: 'http://192.168.100.32:3000/api', // IP de votre ordinateur
+    baseURL: 'http://192.168.1.240:3000/api', // IP de votre ordinateur (maison)
+    // baseURL: 'http://192.168.100.32:3000/api', // IP de votre ordinateur (maison)
   }
 };
 

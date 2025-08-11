@@ -12,6 +12,10 @@ export interface Photo {
   visitDate: string;
   validityDate: string;
   photoBase64: string;
+  latitude?: number;
+  longitude?: number;
+  adresse?: string;
+  timestamp_photo?: string;
 }
 
 class PhotoService {
@@ -56,6 +60,10 @@ class PhotoService {
     validityDate: string;
     photoBase64: string;
     ctaId: string;
+    latitude?: number;
+    longitude?: number;
+    adresse?: string;
+    timestamp_photo?: string;
   }): Promise<Photo> {
     try {
       const newPhoto: Photo = {
@@ -63,6 +71,8 @@ class PhotoService {
         id: this.generateId(),
         timestamp: new Date(),
         visitDate: new Date().toISOString().split('T')[0],
+        // Utiliser le timestamp_photo fourni ou générer un nouveau
+        timestamp_photo: photoData.timestamp_photo || new Date().toISOString().slice(0, 19).replace('T', ' '),
       };
 
       // 1. Sauvegarder en base de données
@@ -106,6 +116,10 @@ class PhotoService {
         type_vehicule: photo.vehicleType,
         photo_base64: photo.photoBase64,
         cta_id: photo.ctaId,
+        latitude: photo.latitude,
+        longitude: photo.longitude,
+        adresse: photo.adresse,
+        timestamp_photo: photo.timestamp_photo,
       };
 
       // Log des données sans la photo base64 pour plus de clarté

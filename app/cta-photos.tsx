@@ -54,6 +54,10 @@ export default function CTAPhotoScreen() {
     center: string;
     validityDate: string;
     photoBase64: string;
+    latitude?: number;
+    longitude?: number;
+    adresse?: string;
+    timestamp_photo?: string;
   }) => {
     // Générer un ctaId automatiquement si aucun n'est fourni
     const finalCtaId = ctaId || Math.floor(Math.random() * 1000000) + 1000000; // ID numérique entre 1000000 et 1999999
