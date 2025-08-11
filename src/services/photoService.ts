@@ -106,7 +106,9 @@ class PhotoService {
       
       const token = (global as any).authToken;
       console.log('🔑 Token disponible:', !!token);
-      console.log('🔑 Token:', token);
+      console.log('🔑 Token:', token ? `${token.substring(0, 20)}...` : 'null');
+      
+
       
       if (!token) {
         throw new Error('Token d\'authentification manquant');

@@ -176,7 +176,7 @@ export default function PhotoCapture({ onPhotoTaken, onClose, ctaId }: PhotoCapt
             base64: true,
           });
           
-          console.log('📷 Photo capturée avec takePictureAsync - URI:', photo.uri, 'Base64:', photo.base64 ? `${photo.base64.length} caractères` : 'null');
+          console.log('📷 Photo capturée avec takePictureAsync');
           setCapturedImage(photo.uri);
           setPhotoBase64(photo.base64 || '');
           
@@ -190,7 +190,7 @@ export default function PhotoCapture({ onPhotoTaken, onClose, ctaId }: PhotoCapt
           // Essayer avec takePicture (pour CameraView)
           const photo = await cameraRef.current.takePicture();
           
-          console.log('📷 Photo capturée avec takePicture - URI:', photo.uri, 'Base64:', photo.base64 ? `${photo.base64.length} caractères` : 'null');
+          console.log('📷 Photo capturée avec takePicture');
           setCapturedImage(photo.uri);
           setPhotoBase64(photo.base64 || '');
           
@@ -214,19 +214,65 @@ export default function PhotoCapture({ onPhotoTaken, onClose, ctaId }: PhotoCapt
   const getLocationData = async () => {
     setLocationLoading(true);
     try {
+      console.log('🔄 Début de la récupération de localisation...');
+      
       const locationService = LocationService.getInstance();
+      console.log('📱 Récupération de la position...');
+      
       const location = await locationService.getCurrentLocation();
       
       if (location) {
         setLocationData(location);
-        console.log('📍 Localisation obtenue:', location);
+        console.log('✅ Localisation obtenue avec succès:', {
+          latitude: location.latitude,
+          longitude: location.longitude,
+          adresse: location.adresse || 'Non disponible'
+        });
+        
+        // Afficher un message de succès
+        Alert.alert(
+          'Localisation obtenue',
+          `Position: ${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}\nAdresse: ${location.adresse || 'Non disponible'}`,
+          [{ text: 'OK' }]
+        );
       } else {
         console.log('⚠️ Impossible d\'obtenir la localisation');
+        Alert.alert(
+          'Localisation échouée',
+          'Impossible d\'obtenir votre position. Vérifiez que la localisation GPS est activée.',
+          [{ text: 'OK' }]
+        );
       }
     } catch (error) {
       console.error('❌ Erreur lors de l\'obtention de la localisation:', error);
+      Alert.alert(
+        'Erreur de localisation',
+        'Une erreur est survenue lors de la récupération de votre position.',
+        [{ text: 'OK' }]
+      );
     } finally {
       setLocationLoading(false);
+    }
+  };
+
+  // Test simple de la géolocalisation
+  const testLocation = async () => {
+    try {
+      console.log('🧪 Test simple de la géolocalisation...');
+      const locationService = LocationService.getInstance();
+      const location = await locationService.getCurrentLocation();
+      
+      if (location) {
+        Alert.alert(
+          'Test réussi', 
+          `Position: ${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}\nAdresse: ${location.adresse || 'Non disponible'}`
+        );
+      } else {
+        Alert.alert('Test échoué', 'La géolocalisation ne fonctionne pas. Vérifiez les permissions et la configuration.');
+      }
+    } catch (error) {
+      console.error('❌ Erreur lors du test:', error);
+      Alert.alert('Erreur de test', 'Impossible de tester la géolocalisation.');
     }
   };
 
@@ -369,18 +415,7 @@ export default function PhotoCapture({ onPhotoTaken, onClose, ctaId }: PhotoCapt
     const locationService = LocationService.getInstance();
     const timestamp_photo = locationService.getCurrentTimestamp();
 
-    console.log('✅ Données à envoyer:', {
-      photoUri: capturedImage!,
-      licensePlate: licensePlate.trim(),
-      vehicleType,
-      center,
-      validityDate,
-      photoBase64: photoBase64 ? `${photoBase64.length} caractères` : 'null',
-      latitude: locationData?.latitude,
-      longitude: locationData?.longitude,
-      adresse: locationData?.adresse,
-      timestamp_photo,
-    });
+    console.log('✅ Données à envoyer - Plaque:', licensePlate.trim(), 'Type:', vehicleType, 'Centre:', center);
 
     console.log('📋 Redirection vers la fiche de contrôle...');
     
@@ -448,6 +483,14 @@ export default function PhotoCapture({ onPhotoTaken, onClose, ctaId }: PhotoCapt
           ...photoData,
           ficheControlePDF: pdfBase64,
         };
+        
+        // Log des données de géolocalisation finales
+        console.log('📍 Données de géolocalisation finales:', {
+          latitude: photoData.latitude,
+          longitude: photoData.longitude,
+          adresse: photoData.adresse,
+          timestamp_photo: photoData.timestamp_photo
+        });
         
         // Appeler onPhotoTaken avec toutes les données
         onPhotoTaken(completeData);
@@ -672,12 +715,12 @@ export default function PhotoCapture({ onPhotoTaken, onClose, ctaId }: PhotoCapt
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Prise de photo du véhicule</Text>
-        <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-          <Text style={styles.closeButtonText}>✕</Text>
-        </TouchableOpacity>
-      </View>
+              <View style={styles.header}>
+          <Text style={styles.title}>Prise de photo du véhicule</Text>
+          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+            <Text style={styles.closeButtonText}>✕</Text>
+          </TouchableOpacity>
+        </View>
 
       <CameraComponent style={styles.camera} type={cameraType} ref={cameraRef} />
       
@@ -707,7 +750,12 @@ export default function PhotoCapture({ onPhotoTaken, onClose, ctaId }: PhotoCapt
           <View style={styles.captureButtonInner} />
         </TouchableOpacity>
 
-        <View style={styles.placeholderButton} />
+        <TouchableOpacity 
+          style={styles.testLocationButton} 
+          onPress={testLocation}
+        >
+          <Text style={styles.testLocationButtonText}>📍</Text>
+        </TouchableOpacity>
       </View>
 
       {analyzing && (
@@ -1006,9 +1054,23 @@ const styles = StyleSheet.create({
     minWidth: 150,
     alignItems: 'center',
   },
-  retryButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-}); 
+          retryButtonText: {
+          color: 'white',
+          fontSize: 16,
+          fontWeight: 'bold',
+        },
+        testLocationButton: {
+          width: 60,
+          height: 60,
+          borderRadius: 30,
+          backgroundColor: 'rgba(52, 152, 219, 0.8)',
+          justifyContent: 'center',
+          alignItems: 'center',
+          borderWidth: 2,
+          borderColor: 'white',
+        },
+        testLocationButtonText: {
+          fontSize: 24,
+          color: 'white',
+        },
+      }); 

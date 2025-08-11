@@ -1,6 +1,26 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import RNHTMLtoPDF from 'react-native-html-to-pdf';
 
+// Vérifier si la librairie PDF est disponible
+const isPDFLibraryAvailable = () => {
+  return RNHTMLtoPDF && typeof RNHTMLtoPDF.convert === 'function';
+};
+
+// Fonction utilitaire pour convertir en base64 (compatible React Native)
+const convertToBase64 = (str: string): string => {
+  try {
+    // Essayer d'abord btoa (disponible sur certaines plateformes)
+    if (typeof btoa === 'function') {
+      return btoa(str);
+    }
+    // Fallback pour React Native
+    return Buffer.from(str, 'utf8').toString('base64');
+  } catch (error) {
+    console.warn('⚠️ Erreur lors de la conversion base64, utilisation d\'une chaîne simple');
+    return str;
+  }
+};
+
 // Types pour la génération PDF
 export interface ControlResult {
   pointId: string;
@@ -51,11 +71,9 @@ export const generateControlChecklistHTML = (data: PDFGenerationData): string =>
     return date.toLocaleDateString('fr-FR');
   };
 
-  // Logo de l'entreprise - utiliser le logo personnalisé s'il est fourni, sinon logo par défaut
-  const defaultLogo = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgdmlld0JveD0iMCAwIDEyMCAxMjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMjAiIGhlaWdodD0iMTIwIiByeD0iMTIiIGZpbGw9IiMyMTk2RjMiLz4KPHN2ZyB4PSIzMCIgeT0iMzAiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJ3aGl0ZSI+CjxwYXRoIGQ9Ik0xMiAyQzYuNDggMiAyIDYuNDggMiAxMnM0LjQ4IDEwIDEwIDEwIDEwLTQuNDggMTAtMTBTMTcuNTIgMiAxMiAyeiBNMTMgMTdoLTJ2LTZoMnY2em0wLThoLTJWN2gydjJ6Ii8+Cjwvc3ZnPgo8L3N2Zz4K';
-  
-  // Utiliser le logo personnalisé s'il est fourni, sinon le logo par défaut
-  const companyLogo = data.companyLogo || defaultLogo;
+  // Logo de l'entreprise - optionnel, s'affiche seulement s'il est fourni
+  // Évite l'affichage de base64 dans le terminal
+  const companyLogo = data.companyLogo || null;
 
   // Obtenir les résultats par fonction
   const getResultsByFunction = (functionName: string) => {
@@ -308,14 +326,16 @@ export const generateControlChecklistHTML = (data: PDFGenerationData): string =>
       </style>
     </head>
     <body>
-      <!-- Filigrane -->
+      <!-- Filigrane (seulement si logo disponible) -->
+      ${companyLogo ? `
       <div class="watermark">
         <img src="${companyLogo}" alt="Logo entreprise" />
       </div>
+      ` : ''}
       
-      <!-- En-tête avec logo -->
+      <!-- En-tête avec logo (seulement si logo disponible) -->
       <div class="header">
-        <img src="${companyLogo}" alt="Logo CNSR" class="company-logo" />
+        ${companyLogo ? `<img src="${companyLogo}" alt="Logo CNSR" class="company-logo" />` : ''}
         <h1>FICHE DE CONTRÔLE TECHNIQUE AUTOMOBILE</h1>
         <p>République du Bénin - Ministère des Transports</p>
         <p>Centre National de Sécurité Routière (CNSR)</p>
@@ -393,7 +413,7 @@ export class PDFService {
     try {
       const html = generateControlChecklistHTML(data);
       
-      // Sauvegarder temporairement en local pour debug
+      // Sauvegarder temporairement en local pour debug (sans afficher l'HTML)
       await AsyncStorage.setItem('lastGeneratedHTML', html);
       
       console.log('✅ HTML de la fiche de contrôle généré avec succès');
@@ -407,6 +427,13 @@ export class PDFService {
   // Convertir HTML en PDF avec react-native-html-to-pdf
   async convertHTMLToPDF(html: string): Promise<string> {
     try {
+      // Vérifier si la librairie PDF est disponible
+      if (!isPDFLibraryAvailable()) {
+        console.warn('⚠️ Librairie PDF non disponible, utilisation du fallback HTML');
+        const htmlBase64 = convertToBase64(html);
+        return `data:text/html;base64,${htmlBase64}`;
+      }
+
       console.log('🔄 Début de la conversion HTML vers PDF...');
       
       // Options de conversion PDF
@@ -417,18 +444,18 @@ export class PDFService {
         base64: true, // ⭐ IMPORTANT: Retourner en base64
       };
       
-      console.log('📄 Options de conversion:', options);
+      console.log('📄 Conversion PDF en cours...');
       
-      // Convertir HTML vers PDF
+      // Convertir HTML vers PDF - utiliser la méthode correcte
       const file = await RNHTMLtoPDF.convert(options);
       
-      if (file.filePath) {
-        console.log('✅ PDF généré avec succès:', file.filePath);
+      if (file && file.filePath) {
+        console.log('✅ PDF généré avec succès');
         console.log('📊 Taille du fichier:', file.fileSize, 'bytes');
         
         // Le fichier est déjà en base64 grâce à l'option base64: true
         if (file.base64) {
-          console.log('✅ PDF converti en base64:', file.base64.substring(0, 100) + '...');
+          console.log('✅ PDF en base64 prêt');
           return file.base64;
         } else {
           throw new Error('PDF généré mais pas de base64 disponible');
@@ -441,7 +468,7 @@ export class PDFService {
       
       // Fallback: retourner l'HTML en base64 si la conversion échoue
       console.warn('⚠️ Utilisation de l\'HTML en base64 comme fallback');
-      const htmlBase64 = Buffer.from(html, 'utf8').toString('base64');
+      const htmlBase64 = convertToBase64(html);
       return `data:text/html;base64,${htmlBase64}`;
     }
   }
