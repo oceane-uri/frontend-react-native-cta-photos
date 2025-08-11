@@ -66,7 +66,7 @@ export default function CTAPhotoScreen() {
     try {
       const newPhoto = await photoService.addPhoto({
         ...photoData,
-        ctaId: finalCtaId,
+        ctaId: String(finalCtaId),
       });
 
       setPhotos(prevPhotos => [newPhoto, ...prevPhotos]);

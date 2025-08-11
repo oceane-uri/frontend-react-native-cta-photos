@@ -98,7 +98,7 @@ export default function HomeScreen() {
     toggleMenu(); // Fermer le menu après l'action
   };
 
-  const renderCTACard = ({ item }) => (
+  const renderCTACard = ({ item }: { item: any }) => (
     <View style={styles.card}>
       <TouchableOpacity
         style={styles.cardContent}

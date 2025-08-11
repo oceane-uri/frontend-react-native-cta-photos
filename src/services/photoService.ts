@@ -16,6 +16,8 @@ export interface Photo {
   longitude?: number;
   adresse?: string;
   timestamp_photo?: string;
+  // Juste le PDF de la fiche de contrôle
+  ficheControlePDF?: string;
 }
 
 class PhotoService {
@@ -64,10 +66,12 @@ class PhotoService {
     longitude?: number;
     adresse?: string;
     timestamp_photo?: string;
+    ficheControlePDF?: string;
   }): Promise<Photo> {
     try {
       const newPhoto: Photo = {
         ...photoData,
+        uri: photoData.photoUri, // Mapper photoUri vers uri
         id: this.generateId(),
         timestamp: new Date(),
         visitDate: new Date().toISOString().split('T')[0],
@@ -120,6 +124,8 @@ class PhotoService {
         longitude: photo.longitude,
         adresse: photo.adresse,
         timestamp_photo: photo.timestamp_photo,
+        // Juste le PDF de la fiche de contrôle
+        fiche_controle_pdf: photo.ficheControlePDF || null,
       };
 
       // Log des données sans la photo base64 pour plus de clarté

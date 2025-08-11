@@ -12,7 +12,13 @@ import {
   TextInput,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import LocationService, { LocationData } from '../services/locationService';
+import ControlChecklist from './ControlChecklist';
+import PDFPreview from './PDFPreview';
+import { ControlResult, VehicleInfo } from '../services/pdfService';
+import { getCompanyLogoBase64 } from '../utils/logoConverter';
+import { Colors } from '../../constants/Colors';
 
 // Import expo-camera components
 import {
@@ -69,6 +75,7 @@ interface PhotoCaptureProps {
     longitude?: number;
     adresse?: string;
     timestamp_photo?: string;
+    ficheControlePDF?: string;
   }) => void;
   onClose: () => void;
   ctaId: string;
@@ -105,6 +112,11 @@ export default function PhotoCapture({ onPhotoTaken, onClose, ctaId }: PhotoCapt
   const [photoBase64, setPhotoBase64] = useState<string>('');
   const [locationData, setLocationData] = useState<LocationData | null>(null);
   const [locationLoading, setLocationLoading] = useState(false);
+  
+  // États pour le flux de points de contrôle
+  const [showControlChecklist, setShowControlChecklist] = useState(false);
+  const [showPDFPreview, setShowPDFPreview] = useState(false);
+  const [controlResults, setControlResults] = useState<ControlResult[]>([]);
   
   const cameraRef = useRef<any>(null);
 
@@ -332,7 +344,7 @@ export default function PhotoCapture({ onPhotoTaken, onClose, ctaId }: PhotoCapt
     return today.toISOString().split('T')[0];
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     console.log('🔍 handleConfirm appelé avec:', {
       licensePlate,
       vehicleType,
@@ -370,8 +382,19 @@ export default function PhotoCapture({ onPhotoTaken, onClose, ctaId }: PhotoCapt
       timestamp_photo,
     });
 
-    console.log('📞 Appel de onPhotoTaken...');
-    onPhotoTaken({
+    console.log('📋 Redirection vers la fiche de contrôle...');
+    
+    // Préparer les données pour la fiche de contrôle
+    const vehicleInfo: VehicleInfo = {
+      licensePlate: licensePlate.trim(),
+      vehicleType,
+      center,
+      visitDate: new Date().toISOString().split('T')[0],
+      validityDate,
+    };
+    
+    // Stocker temporairement les données de la photo
+    const photoData = {
       photoUri: capturedImage!,
       licensePlate: licensePlate.trim(),
       vehicleType,
@@ -382,8 +405,13 @@ export default function PhotoCapture({ onPhotoTaken, onClose, ctaId }: PhotoCapt
       longitude: locationData?.longitude,
       adresse: locationData?.adresse,
       timestamp_photo,
-    });
-    console.log('✅ onPhotoTaken appelé avec succès');
+    };
+    
+    // Sauvegarder en local pour utilisation ultérieure
+    await AsyncStorage.setItem('tempPhotoData', JSON.stringify(photoData));
+    
+    // Afficher la fiche de contrôle
+    setShowControlChecklist(true);
   };
 
   const retakePhoto = () => {
@@ -393,10 +421,53 @@ export default function PhotoCapture({ onPhotoTaken, onClose, ctaId }: PhotoCapt
     setPhotoBase64('');
   };
 
+  // Gestion des points de contrôle
+  const handleControlChecklistComplete = (results: ControlResult[]) => {
+    setControlResults(results);
+    setShowControlChecklist(false);
+    setShowPDFPreview(true);
+  };
+
+  const handleControlChecklistBack = () => {
+    setShowControlChecklist(false);
+  };
+
+  const handlePDFPreviewBack = () => {
+    setShowPDFPreview(false);
+  };
+
+  const handlePDFSave = async (pdfBase64: string) => {
+    try {
+      // Récupérer les données de la photo sauvegardées
+      const tempPhotoData = await AsyncStorage.getItem('tempPhotoData');
+      if (tempPhotoData) {
+        const photoData = JSON.parse(tempPhotoData);
+        
+        // Ajouter juste le PDF de la fiche de contrôle
+        const completeData = {
+          ...photoData,
+          ficheControlePDF: pdfBase64,
+        };
+        
+        // Appeler onPhotoTaken avec toutes les données
+        onPhotoTaken(completeData);
+        
+        // Nettoyer le stockage temporaire
+        await AsyncStorage.removeItem('tempPhotoData');
+        
+        // Fermer le composant
+        onClose();
+      }
+    } catch (error) {
+      console.error('❌ Erreur lors de la sauvegarde:', error);
+      Alert.alert('Erreur', 'Impossible de sauvegarder les données');
+    }
+  };
+
   if (hasPermission === null) {
     return (
       <View style={styles.container}>
-        <ActivityIndicator size="large" color="#2196F3" />
+                    <ActivityIndicator size="large" color={Colors.cnsr.primary} />
         <Text style={styles.loadingText}>Demande de permission...</Text>
       </View>
     );
@@ -411,6 +482,93 @@ export default function PhotoCapture({ onPhotoTaken, onClose, ctaId }: PhotoCapt
         </TouchableOpacity>
       </View>
     );
+  }
+
+  // Afficher la fiche de contrôle
+  if (showControlChecklist) {
+    const vehicleInfo: VehicleInfo = {
+      licensePlate: licensePlate.trim(),
+      vehicleType,
+      center,
+      visitDate: new Date().toISOString().split('T')[0],
+      validityDate: calculateValidityDate(vehicleType),
+    };
+
+    return (
+      <ControlChecklist
+        vehicleInfo={vehicleInfo}
+        onComplete={handleControlChecklistComplete}
+        onBack={handleControlChecklistBack}
+      />
+    );
+  }
+
+  // Afficher la prévisualisation PDF
+  if (showPDFPreview) {
+    const vehicleInfo: VehicleInfo = {
+      licensePlate: licensePlate.trim(),
+      vehicleType,
+      center,
+      visitDate: new Date().toISOString().split('T')[0],
+      validityDate: calculateValidityDate(vehicleType),
+    };
+
+    // Créer un composant asynchrone pour charger le logo
+    const PDFPreviewWithLogo = () => {
+      const [logoLoaded, setLogoLoaded] = useState(false);
+      const [companyLogo, setCompanyLogo] = useState<string>('');
+
+      useEffect(() => {
+        const loadLogo = async () => {
+          try {
+            const logo = await getCompanyLogoBase64();
+            setCompanyLogo(logo);
+            setLogoLoaded(true);
+          } catch (error) {
+            console.error('❌ Erreur lors du chargement du logo:', error);
+            setLogoLoaded(true); // Continuer sans logo
+          }
+        };
+        loadLogo();
+      }, []);
+
+      if (!logoLoaded) {
+        return (
+          <View style={styles.container}>
+            <View style={styles.header}>
+              <Text style={styles.title}>Chargement du logo...</Text>
+              <TouchableOpacity style={{ padding: 10 }} onPress={handlePDFPreviewBack}>
+                <Text style={{ color: 'white', fontSize: 16 }}>← Retour</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+              <ActivityIndicator size="large" color={Colors.cnsr.primary} />
+              <Text style={{ marginTop: 20, fontSize: 16, color: '#666', textAlign: 'center' }}>
+                Chargement du logo CNSR...
+              </Text>
+            </View>
+          </View>
+        );
+      }
+
+      const pdfData = {
+        vehicleInfo,
+        controlResults, // Garder pour la génération du PDF
+        technicienName: 'Tech CTA', // Nom du technicien (à personnaliser)
+        timestamp: new Date().toISOString(),
+        companyLogo, // Inclure le logo chargé
+      };
+
+      return (
+        <PDFPreview
+          data={pdfData}
+          onSave={handlePDFSave}
+          onBack={handlePDFPreviewBack}
+        />
+      );
+    };
+
+    return <PDFPreviewWithLogo />;
   }
 
   if (capturedImage && showForm) {
@@ -528,6 +686,12 @@ export default function PhotoCapture({ onPhotoTaken, onClose, ctaId }: PhotoCapt
         <View style={styles.licensePlateFrame}>
           <Text style={styles.frameText}>Cadrez la plaque ici</Text>
           <Text style={styles.frameSubtext}>Format CEDEAO</Text>
+          
+          {/* Coins de cadrage visibles */}
+          <View style={styles.cornerTopLeft} />
+          <View style={styles.cornerTopRight} />
+          <View style={styles.cornerBottomLeft} />
+          <View style={styles.cornerBottomRight} />
         </View>
       </View>
 
@@ -604,24 +768,77 @@ const styles = StyleSheet.create({
   licensePlateFrame: {
     width: width * 0.8,
     height: 100,
-    borderWidth: 2,
-    borderColor: '#2196F3',
+    borderWidth: 4,
+    borderColor: '#FF6B35', // Orange vif pour une meilleure visibilité
     borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(33, 150, 243, 0.1)',
+    backgroundColor: 'rgba(255, 107, 53, 0.1)', // Fond orange transparent
+    shadowColor: '#FF6B35',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 10,
+    elevation: 8,
   },
   frameText: {
-    color: '#2196F3',
-    fontSize: 16,
+    color: '#FF6B35',
+    fontSize: 18,
     fontWeight: 'bold',
     textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.8)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
   },
   frameSubtext: {
-    color: '#2196F3',
-    fontSize: 12,
+    color: '#FF6B35',
+    fontSize: 14,
     textAlign: 'center',
     marginTop: 5,
+    textShadowColor: 'rgba(0, 0, 0, 0.8)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
+  },
+  
+  // Coins de cadrage visibles
+  cornerTopLeft: {
+    position: 'absolute',
+    top: -2,
+    left: -2,
+    width: 20,
+    height: 20,
+    borderTopWidth: 4,
+    borderLeftWidth: 4,
+    borderColor: '#FF6B35',
+  },
+  cornerTopRight: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    width: 20,
+    height: 20,
+    borderTopWidth: 4,
+    borderRightWidth: 4,
+    borderColor: '#FF6B35',
+  },
+  cornerBottomLeft: {
+    position: 'absolute',
+    bottom: -2,
+    left: -2,
+    width: 20,
+    height: 20,
+    borderBottomWidth: 4,
+    borderLeftWidth: 4,
+    borderColor: '#FF6B35',
+  },
+  cornerBottomRight: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    width: 20,
+    height: 20,
+    borderBottomWidth: 4,
+    borderRightWidth: 4,
+    borderColor: '#FF6B35',
   },
   controls: {
     flexDirection: 'row',
@@ -649,13 +866,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 4,
-    borderColor: '#2196F3',
+    borderColor: Colors.cnsr.primary,
   },
   captureButtonInner: {
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#2196F3',
+    backgroundColor: Colors.cnsr.primary,
   },
   placeholderButton: {
     width: 50,
