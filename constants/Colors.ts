@@ -3,19 +3,19 @@
  * Couleurs soft et professionnelles inspirées du logo CNSR
  */
 
-// Couleurs principales CNSR
-const cnsrPrimary = '#3498db';      // Bleu principal (Flat UI Blue)
-const cnsrSecondary = '#2980b9';    // Bleu foncé (Flat UI Dark Blue)
-const cnsrAccent = '#2c3e50';       // Bleu gris foncé (Flat UI Dark Gray)
-const cnsrLight = '#ecf0f1';        // Gris très clair (Flat UI Light Gray)
-const cnsrMedium = '#bdc3c7';       // Gris moyen (Flat UI Medium Gray)
-const cnsrDark = '#34495e';         // Bleu gris (Flat UI Dark Blue Gray)
+// Couleurs principales CNSR - Orange foncé avec dégradé
+const cnsrPrimary = '#FF8C00';      // Orange foncé principal (Dark Orange)
+const cnsrSecondary = '#FF7F00';    // Orange foncé secondaire (Dark Orange 2)
+const cnsrAccent = '#FF6B35';       // Orange rouge foncé (Dark Orange Red)
+const cnsrLight = '#FFF8DC';        // Crème très clair (Cornsilk)
+const cnsrMedium = '#FFE4B5';       // Crème moyen (Moccasin)
+const cnsrDark = '#8B4513';         // Marron foncé (Saddle Brown)
 
 // Couleurs d'état
 const cnsrSuccess = '#27ae60';      // Vert (Flat UI Green)
 const cnsrWarning = '#f39c12';      // Orange (Flat UI Orange)
 const cnsrError = '#e74c3c';        // Rouge (Flat UI Red)
-const cnsrInfo = '#3498db';         // Bleu info (même que primary)
+const cnsrInfo = '#FF8C00';         // Orange info (même que primary)
 
 export const Colors = {
   // Couleurs CNSR principales

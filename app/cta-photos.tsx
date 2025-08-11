@@ -65,7 +65,7 @@ export default function CTAPhotoScreen() {
     console.log('🔄 Utilisation du ctaId:', finalCtaId);
 
     try {
-      console.log('📸 Données reçues de PhotoCapture');
+      console.log('📸 Données reçues de PhotoCapture:', photoData);
       console.log('🔑 ficheControlePDF présent:', !!photoData.ficheControlePDF);
       
       const newPhoto = await photoService.addPhoto({

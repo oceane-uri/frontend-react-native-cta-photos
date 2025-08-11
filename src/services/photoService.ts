@@ -155,7 +155,7 @@ class PhotoService {
       }
 
       const responseData = await response.json();
-      console.log('✅ Photo sauvegardée en base de données:', responseData);
+      console.log('✅ Photo sauvegardée en base de données - ID:', responseData.data?.id);
     } catch (error) {
       console.error('❌ Erreur lors de la sauvegarde en base:', error);
       throw error;

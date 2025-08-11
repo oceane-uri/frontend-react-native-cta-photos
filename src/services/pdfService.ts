@@ -111,7 +111,7 @@ export const generateControlChecklistHTML = (data: PDFGenerationData): string =>
     
     return `
       <div style="margin-bottom: 20px;">
-        <h3 style="color: #2196F3; text-align: center; background-color: #f0f8ff; padding: 10px; margin: 0; border-radius: 5px;">
+        <h3 style="color: #FF8C00; text-align: center; background-color: #FFF8DC; padding: 10px; margin: 0; border-radius: 5px;">
           ${functionName}
         </h3>
         <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
@@ -160,13 +160,13 @@ export const generateControlChecklistHTML = (data: PDFGenerationData): string =>
         }
         .header {
           text-align: center;
-          background: linear-gradient(135deg, #3498db, #2980b9);
+          background: linear-gradient(135deg, #FF8C00, #FF7F00);
           color: white;
           padding: 25px 20px;
           margin-bottom: 30px;
           border-radius: 12px;
           position: relative;
-          box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+          box-shadow: 0 4px 15px rgba(255, 140, 0, 0.3);
         }
         .header h1 {
           color: white;
@@ -203,12 +203,12 @@ export const generateControlChecklistHTML = (data: PDFGenerationData): string =>
           height: 300px;
         }
         .vehicle-info {
-          background: linear-gradient(135deg, #ecf0f1, #bdc3c7);
+          background: linear-gradient(135deg, #FFF8DC, #FFE4B5);
           padding: 18px;
           border-radius: 12px;
           margin-bottom: 30px;
-          border-left: 5px solid #3498db;
-          box-shadow: 0 2px 10px rgba(52, 152, 219, 0.1);
+          border-left: 5px solid #FF8C00;
+          box-shadow: 0 2px 10px rgba(255, 140, 0, 0.1);
         }
         .vehicle-info h2 {
           color: #2c3e50;
@@ -246,8 +246,8 @@ export const generateControlChecklistHTML = (data: PDFGenerationData): string =>
           margin-bottom: 30px;
         }
         .checklist-section h2 {
-          color: #2c3e50;
-          border-bottom: 2px solid #3498db;
+          color: #8B4513;
+          border-bottom: 2px solid #FF8C00;
           padding-bottom: 10px;
           margin-bottom: 20px;
           font-size: 16px;
@@ -267,7 +267,7 @@ export const generateControlChecklistHTML = (data: PDFGenerationData): string =>
           font-size: 12px;
         }
         th {
-          background: linear-gradient(135deg, #3498db, #2980b9);
+          background: linear-gradient(135deg, #FF8C00, #FF7F00);
           color: white;
           font-weight: 600;
           text-shadow: 0 1px 2px rgba(0,0,0,0.1);
@@ -275,11 +275,11 @@ export const generateControlChecklistHTML = (data: PDFGenerationData): string =>
         .footer {
           margin-top: 40px;
           padding-top: 20px;
-          border-top: 2px solid #e8f4fd;
+          border-top: 2px solid #FFE4B5;
           display: flex;
           justify-content: space-between;
           align-items: flex-start;
-          background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+          background: linear-gradient(135deg, #FFF8DC, #FFE4B5);
           padding: 20px;
           border-radius: 12px;
         }
@@ -293,11 +293,11 @@ export const generateControlChecklistHTML = (data: PDFGenerationData): string =>
           box-shadow: 0 2px 10px rgba(52, 152, 219, 0.1);
         }
         .signature-line {
-          border-top: 3px solid #3498db;
+          border-top: 3px solid #FF8C00;
           width: 200px;
           margin: 15px auto;
           height: 3px;
-          background: linear-gradient(90deg, #3498db, #2980b9);
+          background: linear-gradient(90deg, #FF8C00, #FF7F00);
           border-radius: 2px;
         }
         .technicien-name {

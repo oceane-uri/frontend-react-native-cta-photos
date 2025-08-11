@@ -594,10 +594,14 @@ export default function PhotoCapture({ onPhotoTaken, onClose, ctaId }: PhotoCapt
         );
       }
 
+      // Récupérer le nom du technicien connecté
+      const currentUser = (global as any).currentUser;
+      const technicienName = currentUser?.name || currentUser?.username || 'Technicien';
+      
       const pdfData = {
         vehicleInfo,
         controlResults, // Garder pour la génération du PDF
-        technicienName: 'Tech CTA', // Nom du technicien (à personnaliser)
+        technicienName: technicienName, // Nom du technicien connecté
         timestamp: new Date().toISOString(),
         companyLogo, // Inclure le logo chargé
       };
@@ -1063,7 +1067,7 @@ const styles = StyleSheet.create({
           width: 60,
           height: 60,
           borderRadius: 30,
-          backgroundColor: 'rgba(52, 152, 219, 0.8)',
+          backgroundColor: 'rgba(255, 140, 0, 0.8)',
           justifyContent: 'center',
           alignItems: 'center',
           borderWidth: 2,
