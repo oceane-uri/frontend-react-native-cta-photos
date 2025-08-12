@@ -32,12 +32,8 @@ let CameraComponent: any = null;
 let requestCameraPermissionsAsync: any = null;
 
 try {
-  // Examiner la structure complète d'expo-camera
-  console.log('🔍 Structure complète d\'expo-camera:', {
-    CameraView: typeof CameraView,
-    Camera: typeof Camera,
-    useCameraPermissions: typeof useCameraPermissions,
-  });
+  // Examiner la structure d'expo-camera (sans afficher les objets complets)
+  console.log('🔍 Vérification des composants expo-camera...');
   
   // Utiliser CameraView qui est le composant React correct
   if (CameraView && typeof CameraView === 'function') {
@@ -53,12 +49,7 @@ try {
   // Utiliser la nouvelle API de permissions
   requestCameraPermissionsAsync = Camera?.requestCameraPermissionsAsync;
   
-  console.log('✅ Résultat final:', { 
-    CameraComponent: typeof CameraComponent, 
-    CameraIsComponent: typeof CameraComponent === 'function',
-    useCameraPermissions: typeof useCameraPermissions,
-    requestCameraPermissionsAsync: typeof requestCameraPermissionsAsync 
-  });
+  console.log('✅ Composants camera chargés avec succès');
 } catch (error) {
   console.error('❌ Erreur import expo-camera:', error);
 }
@@ -163,7 +154,7 @@ export default function PhotoCapture({ onPhotoTaken, onClose, ctaId }: PhotoCapt
 
   const takePicture = async () => {
     console.log('📸 Tentative de capture...');
-    console.log('🔍 cameraRef.current:', cameraRef.current);
+          console.log('🔍 Référence caméra vérifiée');
     
     if (cameraRef.current) {
       try {
@@ -223,11 +214,7 @@ export default function PhotoCapture({ onPhotoTaken, onClose, ctaId }: PhotoCapt
       
       if (location) {
         setLocationData(location);
-        console.log('✅ Localisation obtenue avec succès:', {
-          latitude: location.latitude,
-          longitude: location.longitude,
-          adresse: location.adresse || 'Non disponible'
-        });
+        console.log('✅ Localisation obtenue avec succès');
         
         // Afficher un message de succès
         Alert.alert(
@@ -297,7 +284,7 @@ export default function PhotoCapture({ onPhotoTaken, onClose, ctaId }: PhotoCapt
 
       if (response.ok) {
         const data = await response.json();
-        console.log('📡 Réponse API Plate Recognizer:', data);
+        console.log('📡 Réponse API Plate Recognizer reçue');
         
         if (data.results && data.results.length > 0) {
           const result = data.results[0];
@@ -391,13 +378,7 @@ export default function PhotoCapture({ onPhotoTaken, onClose, ctaId }: PhotoCapt
   };
 
   const handleConfirm = async () => {
-    console.log('🔍 handleConfirm appelé avec:', {
-      licensePlate,
-      vehicleType,
-      center,
-      capturedImage: !!capturedImage,
-      photoBase64: photoBase64 ? `${photoBase64.length} caractères` : 'null'
-    });
+    console.log('🔍 handleConfirm appelé');
 
     if (!licensePlate.trim()) {
       Alert.alert('Erreur', 'Veuillez saisir le numéro de plaque');
@@ -485,12 +466,7 @@ export default function PhotoCapture({ onPhotoTaken, onClose, ctaId }: PhotoCapt
         };
         
         // Log des données de géolocalisation finales
-        console.log('📍 Données de géolocalisation finales:', {
-          latitude: photoData.latitude,
-          longitude: photoData.longitude,
-          adresse: photoData.adresse,
-          timestamp_photo: photoData.timestamp_photo
-        });
+        console.log('📍 Données de géolocalisation finales récupérées');
         
         // Appeler onPhotoTaken avec toutes les données
         onPhotoTaken(completeData);

@@ -89,9 +89,7 @@ class PhotoService {
       await AsyncStorage.setItem(this.STORAGE_KEY, JSON.stringify(updatedPhotos));
       
       // Log sans la base64 pour plus de clarté
-    const logPhoto = { ...newPhoto };
-    logPhoto.photoBase64 = logPhoto.photoBase64 ? `[BASE64 - ${logPhoto.photoBase64.length} caractères]` : 'null';
-    console.log('Photo ajoutée avec succès:', logPhoto);
+    console.log('Photo ajoutée avec succès (base64 masqué)');
       return newPhoto;
     } catch (error) {
       console.error('Erreur lors de l\'ajout de la photo:', error);
@@ -134,7 +132,7 @@ class PhotoService {
       const logData = { ...requestBody };
       logData.photo_base64 = logData.photo_base64 ? `[BASE64 - ${logData.photo_base64.length} caractères]` : 'null';
       
-      console.log('📤 Données à envoyer:', logData);
+      console.log('📤 Données à envoyer (base64 masqué)');
       console.log('🌐 URL API:', `${API_BASE_URL}/cta/photo`);
 
       const response = await fetch(`${API_BASE_URL}/cta/photo`, {
@@ -193,7 +191,7 @@ class PhotoService {
       
       await AsyncStorage.setItem(this.STORAGE_KEY, JSON.stringify(existingPhotos));
       
-      console.log('Photo mise à jour avec succès:', updatedPhoto);
+      console.log('Photo mise à jour avec succès');
       return updatedPhoto;
     } catch (error) {
       console.error('Erreur lors de la mise à jour de la photo:', error);

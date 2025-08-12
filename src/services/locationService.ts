@@ -71,12 +71,7 @@ class LocationService {
         longitude: location.coords.longitude,
       };
 
-      console.log('✅ Position GPS obtenue:', {
-        latitude: locationData.latitude,
-        longitude: locationData.longitude,
-        accuracy: location.coords.accuracy,
-        timestamp: new Date(location.timestamp).toLocaleString(),
-      });
+      console.log('✅ Position GPS obtenue');
 
       // Convertir les coordonnées en adresse
       try {
@@ -102,7 +97,7 @@ class LocationService {
   // Convertir les coordonnées en adresse (géocodage inverse)
   private async reverseGeocode(latitude: number, longitude: number): Promise<string | null> {
     try {
-      console.log('🔄 Géocodage inverse pour:', { latitude, longitude });
+      console.log('🔄 Géocodage inverse en cours...');
       
       // Utiliser l'API de géocodage inverse gratuite de Nominatim (OpenStreetMap)
       const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`;
@@ -119,7 +114,7 @@ class LocationService {
       }
       
       const data = await response.json();
-      console.log('📡 Réponse Nominatim:', data);
+      console.log('📡 Réponse Nominatim reçue');
 
       if (data.display_name) {
         // Extraire les informations principales de l'adresse

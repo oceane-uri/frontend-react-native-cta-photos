@@ -123,13 +123,7 @@ export default function PDFPreview({ data, onSave, onBack }: PDFPreviewProps) {
         </TouchableOpacity>
       </View>
 
-      {/* Informations du véhicule */}
-      <View style={styles.vehicleInfo}>
-        <Text style={styles.vehicleInfoTitle}>Véhicule: {data.vehicleInfo.licensePlate}</Text>
-        <Text style={styles.vehicleInfoSubtitle}>
-          {data.vehicleInfo.vehicleType} - {data.vehicleInfo.center}
-        </Text>
-      </View>
+
 
       {/* Prévisualisation HTML */}
       <View style={styles.previewContainer}>
