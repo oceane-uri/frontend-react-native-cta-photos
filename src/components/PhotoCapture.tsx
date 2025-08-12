@@ -15,6 +15,7 @@ import { Picker } from '@react-native-picker/picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LocationService, { LocationData } from '../services/locationService';
 import ControlChecklist from './ControlChecklist';
+import ApercuFiche from './ApercuFiche';
 import PDFPreview from './PDFPreview';
 import { ControlResult, VehicleInfo } from '../services/pdfService';
 import { getCompanyLogoBase64 } from '../utils/logoConverter';
@@ -106,6 +107,7 @@ export default function PhotoCapture({ onPhotoTaken, onClose, ctaId }: PhotoCapt
   
   // États pour le flux de points de contrôle
   const [showControlChecklist, setShowControlChecklist] = useState(false);
+  const [showApercuFiche, setShowApercuFiche] = useState(false);
   const [showPDFPreview, setShowPDFPreview] = useState(false);
   const [controlResults, setControlResults] = useState<ControlResult[]>([]);
   
@@ -441,11 +443,27 @@ export default function PhotoCapture({ onPhotoTaken, onClose, ctaId }: PhotoCapt
   const handleControlChecklistComplete = (results: ControlResult[]) => {
     setControlResults(results);
     setShowControlChecklist(false);
-    setShowPDFPreview(true);
+    setShowApercuFiche(true);
   };
 
   const handleControlChecklistBack = () => {
     setShowControlChecklist(false);
+  };
+
+  const handleApercuFicheBack = () => {
+    setShowApercuFiche(false);
+  };
+
+  const handleSendToSupervisor = () => {
+    // TODO: Envoyer au superviseur
+    console.log('📤 Envoi au superviseur...');
+    setShowApercuFiche(false);
+    // Ici on pourrait appeler une API pour envoyer au superviseur
+    Alert.alert(
+      'Envoi réussi',
+      'Votre fiche a été envoyée au superviseur pour validation.',
+      [{ text: 'OK', onPress: onClose }]
+    );
   };
 
   const handlePDFPreviewBack = () => {
@@ -518,6 +536,28 @@ export default function PhotoCapture({ onPhotoTaken, onClose, ctaId }: PhotoCapt
         vehicleInfo={vehicleInfo}
         onComplete={handleControlChecklistComplete}
         onBack={handleControlChecklistBack}
+      />
+    );
+  }
+
+  // Afficher l'aperçu de la fiche (technicien)
+  if (showApercuFiche) {
+    const vehicleInfo: VehicleInfo = {
+      licensePlate: licensePlate.trim(),
+      vehicleType,
+      center,
+      visitDate: new Date().toISOString().split('T')[0],
+      validityDate: calculateValidityDate(vehicleType),
+    };
+
+    return (
+      <ApercuFiche
+        vehicleInfo={vehicleInfo}
+        controlResults={controlResults}
+        technicienName={(global as any).currentUser?.name || 'Technicien'}
+        isEditable={true}
+        onSendToSupervisor={handleSendToSupervisor}
+        onBack={handleApercuFicheBack}
       />
     );
   }

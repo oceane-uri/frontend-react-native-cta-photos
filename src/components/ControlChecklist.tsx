@@ -98,7 +98,13 @@ export default function ControlChecklist({ vehicleInfo, onComplete, onBack }: Co
 
   const handleComplete = () => {
     if (validateChecklist()) {
-      onComplete(controlResults);
+      Alert.alert(
+        'Fiche de contrôle complétée',
+        'Votre fiche a été envoyée au superviseur pour validation. Vous recevrez une notification une fois qu\'elle sera validée.',
+        [
+          { text: 'OK', onPress: () => onComplete(controlResults) }
+        ]
+      );
     }
   };
 

@@ -92,6 +92,9 @@ export default function HomeScreen() {
       case 'reports':
         Alert.alert('Rapports', 'Générer des rapports');
         break;
+      case 'supervisor':
+        router.push('/supervisor');
+        break;
       default:
         break;
     }
@@ -146,6 +149,10 @@ export default function HomeScreen() {
         <Text style={styles.title}>Contrôles Techniques</Text>
         <Text style={styles.subtitle}>
           Bonjour, {(global as any).currentUser?.name || 'Utilisateur'}
+        </Text>
+        {/* Debug temporaire pour vérifier le rôle */}
+        <Text style={styles.debugText}>
+          Rôle: {(global as any).currentUser?.role || 'Non défini'}
         </Text>
       </View>
 
@@ -231,6 +238,31 @@ export default function HomeScreen() {
             <Text style={styles.menuActionIcon}>📊</Text>
             <Text style={styles.menuActionText}>Rapports</Text>
           </TouchableOpacity>
+
+          {/* Bouton Superviseur - visible seulement pour les superviseurs */}
+          {((global as any).currentUser?.role === 'superviseur' || 
+            (global as any).currentUser?.role === 'admin' || 
+            (global as any).currentUser?.role === 'superadmin') && (
+            <TouchableOpacity
+              style={[styles.menuAction, styles.menuActionSupervisor]}
+              onPress={() => handleAction('supervisor')}
+            >
+              <Text style={styles.menuActionIcon}>👨‍💼</Text>
+              <Text style={styles.menuActionText}>Superviseur</Text>
+            </TouchableOpacity>
+          )}
+          
+          {/* Debug temporaire pour vérifier la condition */}
+          <View style={styles.debugContainer}>
+            <Text style={styles.debugText2}>
+              Condition: {((global as any).currentUser?.role === 'superviseur' || 
+                (global as any).currentUser?.role === 'admin' || 
+                (global as any).currentUser?.role === 'superadmin') ? 'VRAI' : 'FAUX'}
+            </Text>
+            <Text style={styles.debugText2}>
+              Rôle actuel: {(global as any).currentUser?.role || 'Non défini'}
+            </Text>
+          </View>
         </Animated.View>
       )}
 
@@ -265,6 +297,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: 'white',
     opacity: 0.8,
+  },
+  debugText: {
+    fontSize: 12,
+    color: 'white',
+    opacity: 0.6,
+    marginTop: 5,
   },
   list: {
     flex: 1,
@@ -426,6 +464,21 @@ const styles = StyleSheet.create({
   },
   menuActionSecondary: {
     backgroundColor: '#9C27B0',
+  },
+  menuActionSupervisor: {
+    backgroundColor: '#FF9800',
+  },
+  debugContainer: {
+    backgroundColor: 'rgba(0,0,0,0.1)',
+    padding: 10,
+    borderRadius: 8,
+    marginTop: 10,
+  },
+  debugText2: {
+    fontSize: 10,
+    color: '#333',
+    textAlign: 'center',
+    marginBottom: 2,
   },
   menuActionIcon: {
     fontSize: 20,

@@ -124,6 +124,8 @@ class PhotoService {
         longitude: photo.longitude,
         adresse: photo.adresse,
         timestamp_photo: photo.timestamp_photo,
+        // Statut initial : en attente de validation
+        statut_validation: 'en_attente',
         // Juste le PDF de la fiche de contrôle
         fiche_controle_pdf: photo.ficheControlePDF || null,
       };
